@@ -1,13 +1,16 @@
 import os
 import sys
+import argparse
 
 # not used but needs to be set for the DIR execution
 os.environ['DB_ROOT'] = "dummy"
 
 """
 Makes the DIRtorch model available from inside a python file: constructs the shell command for running the model and executes it.
+It also automatically converts paths to be relative to the deep image retrieval repository
 This was built for usage in the Pipeline.
-You could totally just manually modify the command and run it in a shell outside of the Pipeline.
+You could totally just manually modify the shell command directly and run it outside of the Pipeline 
+In that case manually set DB_ROOT environ var (to a dummy variable if not used)
 
 SETUP:
 1. Pull the https://github.com/naver/deep-image-retrieval repo into a folder called 'deep-image-retrieval' (if you change it to something else adapt the variable repo_folder)
@@ -17,14 +20,15 @@ SETUP:
 """
 
 
-def get_features(image_folder, image_list_file, output_file, gpu_id, repo_folder="deep-image-retrieval", skip_if_exists=False):
+def get_features(image_folder, image_list_file, output_file, checkpoint, gpu_id, repo_folder="deep-image-retrieval", skip_if_exists=False):
     """
     Runs the DIRtorch model on an image folder
     :param image_folder: path to the folder - feature vectors will be calculated for all images inside the folder
     :param image_list_file: path to the file that lists all images in image_folder - if it doesn't exist it will be created automatically
     :param output_file: path to the .npy file where the feature vectors are output
-    :param gpu_id: -1 = use CPU, 1 = first GPU, 2 = second GPU etc. You WANT to use a GPU, else the feature calculation is painfully slow.
-    :param repo_folder: path to the DIRtorch repository
+    :param checkpoint: path to the model used for the feature vector calculation
+    :param gpu_id: -1 = use CPU, 0 = first GPU, 1 = second GPU etc. You WANT to use a GPU, else the feature calculation is painfully slow.
+    :param repo_folder: path to the deep image retrieval repository
     :param skip_if_exists: skip execution if the output file already exists
     """
 
@@ -53,8 +57,6 @@ def get_features(image_folder, image_list_file, output_file, gpu_id, repo_folder
     old_cwd = os.getcwd()
     os.chdir(repo_folder)
 
-    checkpoint = "dirtorch/models/Resnet101-AP-GeM-LM18.pt"
-
     # create the dataset representation
     """
     the string version of a command that will be evaluated internally by DIR,see https://github.com/naver/deep-image-retrieval#feature-extractor
@@ -77,8 +79,25 @@ def get_features(image_folder, image_list_file, output_file, gpu_id, repo_folder
     os.chdir(old_cwd)
     # ---------------------------#
 
+
+def main():
+    parser = argparse.ArgumentParser(description="Extract features from images.")
+
+    parser.add_argument("--checkpoint", default="dirtorch/models/Resnet101-AP-GeM-LM18.pt",
+                        help="Path to the checkpoint file.")
+    parser.add_argument("--image-folder", default="../Data/image_db",
+                        help="Path to the image folder.")
+    parser.add_argument("--output-file", default="../Data/feature_vectors.npy",
+                        help="Path where feature vectors will be saved.")
+    parser.add_argument("--image-list-file", default="../Data/image_db.txt",
+                        help="Path to the image list file (textfile with all image names for which features should be calculated). If it doesn't exist on disk it will be created automatically using all images in the image folder")
+    parser.add_argument("--gpu-id", type=int, default=0,
+                        help="GPU ID to be used. 0=first GPU, -1 = CPU. You'll WANT to use a GPU, else the feature calculation is painfully slow.")
+
+    args = parser.parse_args()
+
+    get_features(args.image_folder, args.image_list_file, args.output_file, args.checkpoint, args.gpu_id)
+
+
 if __name__ == "__main__":
-    image_folder = "../image_db3"
-    output_file = "../feature_vectors.npy"
-    image_list_file = "../image_db.txt"
-    get_features(image_folder, image_list_file, output_file, gpu_id=0)
+    main()
