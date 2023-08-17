@@ -1,0 +1,6 @@
+[submodule "deep-image-retrieval"]
+	path = deep-image-retrieval
+	url = https://github.com/naver/deep-image-retrieval
+[submodule "FeatureVectors/deep-image-retrieval"]
+	path = FeatureVectors/deep-image-retrieval
+	url = https://github.com/naver/deep-image-retrieval
