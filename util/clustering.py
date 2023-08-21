@@ -130,7 +130,7 @@ def viz_clusters_compact(clusters, image_db, image_db_folder,features, do_print=
     fpaths = [os.path.join(image_db_folder, img) for img in images]
     if do_print:
         print(os.path.abspath(image_db_folder), *images)
-    return show_images_row(fpaths, title=ratios)
+    show_images_row(fpaths, title=ratios)
 
 def perform_clustering(features, n_clusters, pca_components=20):
     """
@@ -141,7 +141,7 @@ def perform_clustering(features, n_clusters, pca_components=20):
     :return: tuple of:
     - clustering: fitted clustering object
     - labels: cluster labels (numpy array of shape N)
-    - labels_sorted: cluster labels sorted by occurrence (numpy array of shape N)
+    - labels_freq: cluster labels sorted by occurrence (numpy array of shape N)
     - clusters: dict of {cluster:[list of indices]} (index referring to features)
     - features_pca: dimensionality-reduces features used for the clustering
     """
@@ -154,9 +154,9 @@ def perform_clustering(features, n_clusters, pca_components=20):
     clustering = KMeans(n_clusters=n_clusters, random_state=42)
     clustering.fit(features_pca)
     labels = clustering.labels_
-    labels_sorted = pd.Series(labels).value_counts().sort_values(ascending=False)
+    labels_freq = pd.Series(labels).value_counts().sort_values(ascending=False)
     clusters = get_clustering_dict(labels)
-    return clustering, labels, labels_sorted, clusters, features_pca
+    return clustering, labels, labels_freq, clusters, features_pca
 
 
 def cluster_and_plot(resources, n_clusters, cluster_names=None, areaplot_freq="Q"):
